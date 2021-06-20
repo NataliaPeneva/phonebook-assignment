@@ -1,30 +1,31 @@
 "use strict"
 module.exports = {
   up: async (queryInterface, DataTypes) => {
-    await queryInterface.createTable("users", {
+    await queryInterface.createTable("contacts", {
       id: {
         allowNull: false,
         primaryKey: true,
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
       },
-      email: {
-        type: DataTypes.STRING,
+      userId: {
+        type: DataTypes.UUID,
         allowNull: false,
-        unique: true,
-      },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
       firstName: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      lastName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+      lastName: DataTypes.STRING,
+
+      email: DataTypes.STRING,
+      address: DataTypes.STRING,
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,
@@ -36,6 +37,6 @@ module.exports = {
     })
   },
   down: async (queryInterface, DataTypes) => {
-    await queryInterface.dropTable("users")
+    await queryInterface.dropTable("contacts")
   },
 }
