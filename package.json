@@ -10,7 +10,7 @@
     "migrate:undo:all": "npx sequelize db:migrate:undo:all",
     "migrate": "npx sequelize db:migrate",
     "db:reset": "npm run migrate:undo:all && npm run migrate",
-    "start": "nodemon ./src/index.js"
+    "start": "node ./index.js"
   },
   "jest": {
     "testEnvironment": "node"
