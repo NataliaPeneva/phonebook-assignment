@@ -227,3 +227,37 @@ describe("/users/:userId/contacts/:contactId (patch)", () => {
     done()
   })
 })
+
+describe("/projects/:projectId (delete)", () => {
+  test("should return 204 if successful", async (done) => {
+    // arrange
+    const { id: userId } = await db.User.create(fakeUser())
+    const { id: contactId } = await db.Contact.create(fakeContact(userId))
+    const token = generateToken({ userId })
+
+    //act
+    const responseDeletedContact = await request
+      .delete(`/users/${userId}/contacts/${contactId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send()
+
+    // assert
+    expect(responseDeletedContact.status).toBe(204)
+    done()
+  })
+  test("should return 404 if sent invalid contactId", async (done) => {
+    // arrange
+    const { id: userId } = await db.User.create(fakeUser())
+    const token = generateToken({ userId })
+
+    //act
+    const responseDeletedContact = await request
+      .delete(`/users/${userId}/contacts/81c934f6-9f53-4616-b6cf-475b6f571726`)
+      .set("Authorization", `Bearer ${token}`)
+      .send()
+
+    // assert
+    expect(responseDeletedContact.status).toBe(404)
+    done()
+  })
+})

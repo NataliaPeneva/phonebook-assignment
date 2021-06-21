@@ -1,5 +1,6 @@
 require("dotenv").config()
 const jwt = require("jsonwebtoken")
+const { Contact } = require("../../models")
 
 const userIdFromToken = (headers) => {
   const authHeader = headers["authorization"]
@@ -17,4 +18,15 @@ const userIdVerification = async (req, res, next) => {
   next()
 }
 
-module.exports = { userIdVerification }
+const contactIdVerification = async (req, res, next) => {
+  const contactIdFromReq = req.params.contactId
+  const findContact = await Contact.findOne({ where: { id: contactIdFromReq } })
+  if (!findContact) {
+    return res
+      .status(404)
+      .json({ message: "Contact with this ID does not exist" })
+  }
+  next()
+}
+
+module.exports = { userIdVerification, contactIdVerification }

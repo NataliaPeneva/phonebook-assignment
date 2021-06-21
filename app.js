@@ -4,7 +4,10 @@ const cors = require("cors")
 const { User, Contact, PhoneNumber } = require("./models")
 const { generateToken } = require("./src/utils/generateToken")
 const { authenticateToken } = require("./src/middlewares/authenticateToken")
-const { userIdVerification } = require("./src/middlewares/userVerification")
+const {
+  userIdVerification,
+  contactIdVerification,
+} = require("./src/middlewares/userVerification")
 
 app.use(express.json())
 app.use(cors())
@@ -127,6 +130,25 @@ app.patch(
       })
       const updatedPhoneNumber = await phoneNumber.update({ ...requestBody })
       return res.json({ updatedContact, updatedPhoneNumber })
+    } catch (error) {
+      return res.status(500).json({ message: error.message, error })
+    }
+  }
+)
+
+// Delete contacts
+app.delete(
+  "/users/:userId/contacts/:contactId",
+  authenticateToken,
+  userIdVerification,
+  contactIdVerification,
+  async (req, res) => {
+    const { contactId } = req.params
+    try {
+      await Contact.destroy({ where: { id: contactId } })
+      await PhoneNumber.destroy({ where: { contactId } })
+
+      return res.status(204).json({ message: "Contact deleted." })
     } catch (error) {
       return res.status(500).json({ message: error.message, error })
     }
