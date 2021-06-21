@@ -52,6 +52,14 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
+      scopes: {
+        recent: {
+          order: [["createdAt", "DESC"]],
+        },
+        alphabetically: {
+          order: [["firstName", "ASC"]],
+        },
+      },
       sequelize,
       tableName: "contacts",
       modelName: "Contact",

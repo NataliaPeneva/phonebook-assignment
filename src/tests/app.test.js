@@ -24,7 +24,7 @@ afterAll(async () => {
   await db.sequelize.close()
 })
 
-describe("/users", () => {
+describe("/users (post)", () => {
   test("should create a new user", async (done) => {
     // arrange
     const body = fakeUser()
@@ -63,7 +63,7 @@ describe("/users", () => {
   })
 })
 
-describe("/login", () => {
+describe("/login (post)", () => {
   test("should respond with an access token when email and password match", async (done) => {
     // arrange
     const fakeUserData = fakeUser()
@@ -112,12 +112,12 @@ describe("/login", () => {
   })
 })
 
-describe("/users/:userId/contacts", () => {
+describe("/users/:userId/contacts (post)", () => {
   test("should create a new contact if sent valid access token, contact details and phone number details", async (done) => {
     // arrange
     const { id: userId } = await db.User.create(fakeUser())
     const token = generateToken({ userId })
-    const contact = fakeContact()
+    const contact = fakeContact(userId)
     const phoneN = fakePhoneNumber()
     const body = {
       ...contact,
@@ -152,6 +152,37 @@ describe("/users/:userId/contacts", () => {
       .send(body)
     // assert
     expect(response.status).toBe(500)
+    done()
+  })
+})
+
+describe("/users/:userId/contacts (get)", () => {
+  test("should return 8 projects sorted by date", async (done) => {
+    // arrange
+    const limit = 8
+    const offset = 0
+    const sortBy = "recent"
+    // const sortBy = "date"
+    const { id: userId } = await db.User.create(fakeUser())
+    const token = generateToken({ userId })
+
+    for (i = 0; i < 10; i++) {
+      const contactInDb = await db.Contact.create(fakeContact(userId))
+      const contactId = contactInDb.id
+      await db.PhoneNumber.create(fakePhoneNumber(contactId))
+    }
+
+    // act
+    const responseContacts = await request
+      .get(`/users/${userId}/contacts`)
+      .set("Authorization", `Bearer ${token}`)
+      .query({ limit, offset, sortBy })
+      .send()
+    // assert
+    expect(responseContacts.body).toBeDefined()
+    expect(responseContacts.status).toBe(200)
+    const responseLength = responseContacts.body.sortedContacts.length
+    expect(responseLength).toBe(8)
     done()
   })
 })

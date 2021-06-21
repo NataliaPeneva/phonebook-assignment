@@ -9,19 +9,21 @@ const fakeUser = () => {
   }
 }
 
-const fakeContact = () => {
+const fakeContact = (userId) => {
   return {
     firstName: faker.name.firstName(),
     lastName: faker.name.lastName(),
     email: faker.internet.email(),
     address: faker.address.streetAddress(true),
+    userId,
   }
 }
 
-const fakePhoneNumber = () => {
+const fakePhoneNumber = (contactId) => {
   return {
     phoneType: "work",
     phoneNumber: faker.phone.phoneNumber(),
+    contactId,
   }
 }
 

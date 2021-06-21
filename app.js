@@ -81,4 +81,28 @@ app.post(
   }
 )
 
+// Get a sorted and paginated overview of contacts
+app.get(
+  "/users/:userId/contacts",
+  authenticateToken,
+  userIdVerification,
+  async (req, res) => {
+    const userId = req.userId
+    const reqLimit = req.query.limit || 10
+    const reqOffset = req.query.offset || 0
+    const sortBy = req.query.sortBy || "alphabetically"
+    try {
+      const sortedContacts = await Contact.scope(sortBy).findAll({
+        where: { userId },
+        limit: reqLimit,
+        offset: reqOffset,
+        include: [{ model: PhoneNumber, as: "phoneNumber" }],
+      })
+      res.json({ sortedContacts })
+    } catch (error) {
+      return res.status(500).json({ message: error.message, error })
+    }
+  }
+)
+
 module.exports = app
