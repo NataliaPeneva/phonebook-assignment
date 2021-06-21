@@ -105,4 +105,32 @@ app.get(
   }
 )
 
+// Update contacts
+app.patch(
+  "/users/:userId/contacts/:contactId",
+  authenticateToken,
+  userIdVerification,
+  async (req, res) => {
+    // const {projectNewData} = req.body
+    const requestBody = req.body
+    const contactIdToUpdate = req.params.contactId
+    try {
+      if (Object.keys(requestBody).length === 0) {
+        return res.status(400).json({ message: "Nothing to update." })
+      }
+      const contact = await Contact.findOne({
+        where: { id: contactIdToUpdate },
+      })
+      const updatedContact = await contact.update({ ...requestBody })
+      const phoneNumber = await PhoneNumber.findOne({
+        where: { contactId: contactIdToUpdate },
+      })
+      const updatedPhoneNumber = await phoneNumber.update({ ...requestBody })
+      return res.json({ updatedContact, updatedPhoneNumber })
+    } catch (error) {
+      return res.status(500).json({ message: error.message, error })
+    }
+  }
+)
+
 module.exports = app

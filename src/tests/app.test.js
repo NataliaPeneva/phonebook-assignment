@@ -186,3 +186,44 @@ describe("/users/:userId/contacts (get)", () => {
     done()
   })
 })
+
+describe("/users/:userId/contacts/:contactId (patch)", () => {
+  test("should return an updated contact&phone number", async (done) => {
+    // arrange
+    const { id: userId } = await db.User.create(fakeUser())
+    const { id: contactId } = await db.Contact.create(fakeContact(userId))
+    await db.PhoneNumber.create(fakePhoneNumber(contactId))
+    const token = generateToken({ userId })
+    const phoneN = fakePhoneNumber()
+    const body = {
+      firstName: "Natalia",
+      ...phoneN,
+    }
+    // act
+    const response = await request
+      .patch(`/users/${userId}/contacts/${contactId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(body)
+    // assert
+    expect(response.body).toBeDefined()
+    expect(response.status).toBe(200)
+    done()
+  })
+  test("should return an error when nothing to update is sent", async (done) => {
+    // arrange
+    const { id: userId } = await db.User.create(fakeUser())
+    const { id: contactId } = await db.Contact.create(fakeContact(userId))
+    await db.PhoneNumber.create(fakePhoneNumber(contactId))
+    const token = generateToken({ userId })
+    const body = {}
+    // act
+    const response = await request
+      .patch(`/users/${userId}/contacts/${contactId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(body)
+    // assert
+    expect(response.body).toBeDefined()
+    expect(response.status).toBe(400)
+    done()
+  })
+})
