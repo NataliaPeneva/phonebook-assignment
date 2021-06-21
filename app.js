@@ -3,6 +3,8 @@ const app = express()
 const cors = require("cors")
 const { User, Contact, PhoneNumber } = require("./models")
 const { generateToken } = require("./src/utils/generateToken")
+const { authenticateToken } = require("./src/middlewares/authenticateToken")
+const { userIdVerification } = require("./src/middlewares/userVerification")
 
 app.use(express.json())
 app.use(cors())
@@ -44,5 +46,39 @@ app.post("/login", async (req, res) => {
     return res.status(500).json({ message: error.message, error })
   }
 })
+
+// Create new contact
+app.post(
+  "/users/:userId/contacts",
+  authenticateToken,
+  userIdVerification,
+  async (req, res) => {
+    const userId = req.userId
+    const reqBody = req.body
+
+    try {
+      const contact = await Contact.create({
+        ...reqBody,
+        userId,
+      })
+      const phone = await PhoneNumber.create({
+        ...reqBody,
+        contactId: contact.id,
+      })
+
+      return res.json({
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email,
+        address: contact.address,
+        phoneType: phone.phoneType,
+        phoneNumber: phone.phoneNumber,
+        message: "Contact successfully created.",
+      })
+    } catch (error) {
+      return res.status(500).json({ message: error.message, error })
+    }
+  }
+)
 
 module.exports = app

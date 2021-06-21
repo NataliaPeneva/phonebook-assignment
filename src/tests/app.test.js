@@ -8,18 +8,19 @@ const {
   fakeContact,
   fakePhoneNumber,
 } = require("../utils/generateFakeData")
+const { generateToken } = require("../utils/generateToken")
 
 // setup
 beforeEach(async () => {
-  await db.User.destroy({ where: {} })
+  await db.PhoneNumber.destroy({ where: {} })
   await db.Contact.destroy({ where: {} })
-  //   await db.PhoneNumber.destroy({ where: {} })
+  await db.User.destroy({ where: {} })
 })
 // tear down
 afterAll(async () => {
-  await db.User.destroy({ where: {} })
+  await db.PhoneNumber.destroy({ where: {} })
   await db.Contact.destroy({ where: {} })
-  //   await db.PhoneNumber.destroy({ where: {} })
+  await db.User.destroy({ where: {} })
   await db.sequelize.close()
 })
 
@@ -107,6 +108,50 @@ describe("/login", () => {
 
     // assert
     expect(responseToken.status).toBe(404)
+    done()
+  })
+})
+
+describe("/users/:userId/contacts", () => {
+  test("should create a new contact if sent valid access token, contact details and phone number details", async (done) => {
+    // arrange
+    const { id: userId } = await db.User.create(fakeUser())
+    const token = generateToken({ userId })
+    const contact = fakeContact()
+    const phoneN = fakePhoneNumber()
+    const body = {
+      ...contact,
+      ...phoneN,
+    }
+    // act
+    const response = await request
+      .post(`/users/${userId}/contacts`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(body)
+    // assert
+    expect(response.body).toBeDefined()
+    expect(response.status).toBe(200)
+    const createdContact = await db.Contact.findOne({
+      where: { email: body.email },
+    })
+    expect(createdContact).not.toBe(null)
+    done()
+  })
+  test("should respond with an error if sent valid access token, contact details but no phone number details", async (done) => {
+    // arrange
+    const { id: userId } = await db.User.create(fakeUser())
+    const token = generateToken({ userId })
+    const contact = fakeContact()
+    const body = {
+      ...contact,
+    }
+    // act
+    const response = await request
+      .post(`/users/${userId}/contacts`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(body)
+    // assert
+    expect(response.status).toBe(500)
     done()
   })
 })
