@@ -19,10 +19,10 @@ app.post("/users", async (req, res) => {
     const token = generateToken({ userId: user.id })
     return res.json({
       token,
+      id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      message: "Account successfully created.",
     })
   } catch (error) {
     return res.status(400).json({ message: error.message, error })
@@ -40,7 +40,7 @@ app.post("/login", async (req, res) => {
     const passwordMatch = await user.comparePassword(password)
     if (!passwordMatch)
       return res
-        .status(404)
+        .status(401)
         .json({ message: "The email & password do not match" })
     const userUuid = { userId: user.id }
     const token = generateToken(userUuid)
@@ -58,25 +58,30 @@ app.post(
   async (req, res) => {
     const userId = req.userId
     const reqBody = req.body
+    const phoneTypes = ["work", "home", "mobile", "other"]
+    if (!phoneTypes.includes(reqBody.phoneType)) {
+      return res
+        .status(400)
+        .json({ message: `Phone type must be one of: ${phoneTypes}` })
+    }
 
     try {
       const contact = await Contact.create({
-        ...reqBody,
+        firstName: reqBody.firstName,
+        lastName: reqBody.lastName,
+        email: reqBody.email,
+        address: reqBody.address,
         userId,
       })
       const phone = await PhoneNumber.create({
-        ...reqBody,
+        phoneType: reqBody.phoneType,
+        phoneNumber: reqBody.phoneNumber,
         contactId: contact.id,
       })
 
       return res.json({
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        address: contact.address,
-        phoneType: phone.phoneType,
-        phoneNumber: phone.phoneNumber,
-        message: "Contact successfully created.",
+        contact,
+        phone,
       })
     } catch (error) {
       return res.status(500).json({ message: error.message, error })
@@ -94,6 +99,7 @@ app.get(
     const reqLimit = req.query.limit || 10
     const reqOffset = req.query.offset || 0
     const sortBy = req.query.sortBy || "alphabetically"
+
     try {
       const sortedContacts = await Contact.scope(sortBy).findAll({
         where: { userId },
@@ -101,7 +107,7 @@ app.get(
         offset: reqOffset,
         include: [{ model: PhoneNumber, as: "phoneNumber" }],
       })
-      res.json({ sortedContacts })
+      return res.json({ sortedContacts })
     } catch (error) {
       return res.status(500).json({ message: error.message, error })
     }
@@ -114,21 +120,24 @@ app.patch(
   authenticateToken,
   userIdVerification,
   async (req, res) => {
-    // const {projectNewData} = req.body
     const requestBody = req.body
     const contactIdToUpdate = req.params.contactId
+
     try {
-      if (Object.keys(requestBody).length === 0) {
+      if (!Object.keys(requestBody).length) {
         return res.status(400).json({ message: "Nothing to update." })
       }
-      const contact = await Contact.findOne({
-        where: { id: contactIdToUpdate },
-      })
-      const updatedContact = await contact.update({ ...requestBody })
-      const phoneNumber = await PhoneNumber.findOne({
-        where: { contactId: contactIdToUpdate },
-      })
-      const updatedPhoneNumber = await phoneNumber.update({ ...requestBody })
+
+      const [contact, phoneNumber] = await Promise.all([
+        Contact.findOne({ where: { id: contactIdToUpdate } }),
+        PhoneNumber.findOne({ where: { contactId: contactIdToUpdate } }),
+      ])
+
+      const [updatedContact, updatedPhoneNumber] = await Promise.all([
+        contact.update({ ...requestBody }),
+        phoneNumber.update({ ...requestBody }),
+      ])
+
       return res.json({ updatedContact, updatedPhoneNumber })
     } catch (error) {
       return res.status(500).json({ message: error.message, error })
@@ -144,9 +153,10 @@ app.delete(
   contactIdVerification,
   async (req, res) => {
     const { contactId } = req.params
+
     try {
-      await Contact.destroy({ where: { id: contactId } })
       await PhoneNumber.destroy({ where: { contactId } })
+      await Contact.destroy({ where: { id: contactId } })
 
       return res.status(204).json({ message: "Contact deleted." })
     } catch (error) {

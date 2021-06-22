@@ -107,7 +107,7 @@ describe("/login (post)", () => {
     const responseToken = await request.post("/login").send(body)
 
     // assert
-    expect(responseToken.status).toBe(404)
+    expect(responseToken.status).toBe(401)
     done()
   })
 })
@@ -151,7 +151,7 @@ describe("/users/:userId/contacts (post)", () => {
       .set("Authorization", `Bearer ${token}`)
       .send(body)
     // assert
-    expect(response.status).toBe(500)
+    expect(response.status).toBe(400)
     done()
   })
 })

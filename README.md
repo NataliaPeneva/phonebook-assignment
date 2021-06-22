@@ -6,7 +6,7 @@ Clone the repository and run
 npm install
 ```
 
-Create a .env file with the following variables:
+Create a `.env` file with the following variables:
 
 ```
 DEV_DATABASE_URL
@@ -14,10 +14,18 @@ TEST_DATABASE_URL
 TOKEN_SECRET
 ```
 
-To run the tests use the following command:
+Values will be provided separately. The first two, should be database urls to be used for development and testing. The token secret can be a string of any value.
+
+To run the tests use the following command
 
 ```
-npm run test:watch
+npm run test
+```
+
+To start the server and test the endpoints manually:
+
+```
+npm run start
 ```
 
 ## Entity Relationship Diagram
@@ -30,7 +38,7 @@ npm run test:watch
 
 Request body: { email, password, firstName, lastName }
 
-Response: { token, email, firstName, lastName, message: "Account successfully created." }
+Response: { token, id, email, firstName, lastName }
 
 **POST /login**
 
@@ -40,13 +48,13 @@ Response: {token}
 
 **POST /users/:userId/contacts**
 
-Request body: { firstName, lastName(optional), email(optional), address(optional), phoneType, phoneNumber }
+Request body: { firstName, lastName(optional), email(optional), address(optional), phoneType(work, home, mobile or other), phoneNumber }
 
 Request params: userId
 
 Authorization header: Bearer token
 
-Response: { firstName, lastName, email, address, phoneType, phoneNumber message: “Contact successfully created." }
+Response: { contact, phone }
 
 **GET /users/:userId/contacts**
 
