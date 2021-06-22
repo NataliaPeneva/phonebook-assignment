@@ -1,3 +1,25 @@
+## Installation
+
+Clone the repository and run
+
+```
+npm install
+```
+
+Create a .env file with the following variables:
+
+```
+DEV_DATABASE_URL
+TEST_DATABASE_URL
+TOKEN_SECRET
+```
+
+To run the tests use the following command:
+
+```
+npm run test:watch
+```
+
 ## Entity Relationship Diagram
 
 ![ERD](./src/images/relationships.png)
